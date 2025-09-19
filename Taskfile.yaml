@@ -1,0 +1,178 @@
+# ─── EXAMPLE SHOWING ALL TASK FEATURES ─────────────────────────────────────────────────────────────────────
+# setup:
+#   desc: "⚙️ Setup environment: install dependencies, generate config"
+# deps:
+# - init:dev
+#   prompt:
+#     - "This will install tools and dependencies. Continue? (y/N)"
+#   preconditions:
+#     - sh: '[ -f ./configs/example.conf ]'
+#       msg: "Missing configs/example.conf — please copy from example.conf"
+#   cmds:
+#     - echo "Installing dependencies..."
+#     - echo "Generating configuration files..."
+#   env:
+#     SETUP_MODE: "auto"
+#   vars:
+#     # Override global PROJECT_NAME example
+#     PROJECT_NAME: "{{.PROJECT_NAME}}"
+
+# ─── Initialized Tasks ─────────────────────────────────
+# init:dev:
+#   desc: "Initialize local/dev environment specifics"
+#   internal: true
+#   cmds:
+#     - echo "Running init:dev task for ENV={{.ENV}}"
+#   platforms: [linux, darwin]  # Only run on macOS/Linux
+
+# ─── Example Task with Inputs & Status Checks and directory ────────────────────────────────
+# run-task:
+#   desc: "Run a task with an input parameter"
+#   dir: terraform/environments/dev
+#   requires:
+#     vars:
+#       - task_name
+#   cmds:
+#     - echo "Running {{.task_name}}"
+#   status:
+#     - 'test -f output/{{.task_name}}.done'
+
+# ──────────────────────────────────────────────────────────────────────────────
+version: "3"
+
+# ─── Global Configuration ───────────────────────────────────────────────────────
+# Specify output style: options: [prefixed, unified]
+output: prefixed
+
+# Support .env files for environment variables
+dotenv:
+  - .env
+  - .env.local
+
+# Global environment variables (can be overridden per task)
+env:
+  ENV: '{{.ENV | default "dev"}}'
+  DEBUG: '{{.DEBUG | default "false"}}'
+
+# Global variables (static or dynamic via shell)
+vars:
+  PROJECT_NAME: '{{.PROJECT_NAME | default "my-project"}}'
+  TIMESTAMP:
+    sh: date '+%Y%m%d%H%M%S'
+
+includes:
+  # Example include of shared tasks
+  common:
+    taskfile: ./Taskfile.gitflow.yaml
+    flatten: true
+
+# # # # # # # --------- # # # # # # # --------- # # # # # #
+# --------------------- Common Tasks ---------------------
+# # # # # # # --------- # # # # # # # --------- # # # # # #
+tasks:
+  default:
+    desc: "📋 List all tasks"
+    cmds:
+      - task --list-all
+
+  # ─── Setup Task ──────────────────────────────────────────────────────────────
+  setup:
+    desc: "⚙️ Setup environment: install dependencies, generate config etc."
+
+  # ─── Development Task ────────────────────────────────────────────────────────
+  dev:
+    desc: "🏗️ Provision and start local development environment"
+    cmds:
+      - pnpm run build
+      - pnpm run start
+     
+  # ─── Production Task ─────────────────────────────────────────────────────────
+  prod:
+    desc: "🚀 Provision and deploy to production"
+
+  # ─── Cleanup Tasks ───────────────────────────────────────────────────────────
+  cleanup-dev:
+    desc: "🔁 Cleanup development resources only"
+
+  cleanup-prod:
+    desc: "🔐 Cleanup production resources only"
+
+  cleanup-all:
+    desc: "🧼 Cleanup dev and prod in one swoop"
+
+  # # # # # # # ---------- # # # # # # # ---------- # # # # # # #
+  # System Management
+  # # # # # # # ---------- # # # # # # # ---------- # # # # # # #
+  ports:
+    desc: "📋 List ports in use"
+    cmds:
+      - ss -tunl
+
+  # # # # # # # ---------- # # # # # # # ---------- # # # # # # #
+  # Docs
+  # # # # # # # ---------- # # # # # # # ---------- # # # # # # #
+  docs:
+    desc: "🌐 Serve docs locally -> http://127.0.0.1:8000/docs/"
+    cmds:
+      - poetry run mkdocs serve --clean
+
+  # # # # # # # ---------- # # # # # # # ---------- # # # # # # #
+  # FFMPEG Compression
+  # # # # # # # ---------- # # # # # # # ---------- # # # # # # #
+  mkdir-assets:
+    desc: Create the assets/ directory if it doesn't exist
+    cmds:
+      - cmd: mkdir -p assets
+        silent: true
+        platforms: [linux, darwin]
+      - cmd: powershell -NoProfile -Command "New-Item -ItemType Directory -Force assets | Out-Null"
+        silent: true
+        platforms: [windows]
+
+  compress:
+    desc: Compress a video to assets/demo-video-small.mp4 (pass video=....mp4)
+    deps: [mkdir-assets]
+    requires:
+      vars: [video]
+    vars:
+      # Optional overrides at runtime: task compress video=... crf=30 preset=fast
+      crf: "{{.crf | default 28}}"
+      preset: '{{.preset | default "veryfast"}}'
+    cmds:
+      - >
+        ffmpeg -i "{{.video}}"
+        -vf "scale=1280:-2,fps=24"
+        -c:v libx264 -crf {{.crf}} -preset {{.preset}}
+        -movflags +faststart
+        -c:a aac -b:a 96k
+        assets/demo-video-small.mp4
+        -y
+    sources:
+      - "{{.video}}"
+    generates:
+      - "assets/demo-video-small.mp4"
+
+  compress-gif:
+    desc: Compress a GIF to assets/demo-video-small.gif (pass gif=....gif)
+    deps: [mkdir-assets]
+    requires:
+      vars: [gif]
+    vars:
+      fps: "{{.fps | default 8}}"
+      colors: "{{.colors | default 64}}"
+    cmds:
+      # Step 1: Generate optimized palette
+      - >
+        ffmpeg -y -i "{{.gif}}"
+        -vf "fps={{.fps}},scale=iw:-1:flags=lanczos,palettegen=max_colors={{.colors}}"
+        assets/palette.png
+      # Step 2: Apply palette
+      - >
+        ffmpeg -y -i "{{.gif}}" -i assets/palette.png
+        -lavfi "fps={{.fps}},scale=iw:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5"
+        assets/demo-video-small.gif
+      - rm -f assets/palette.png
+    sources:
+      - "{{.gif}}"
+    generates:
+      - "assets/demo-video-small.gif"

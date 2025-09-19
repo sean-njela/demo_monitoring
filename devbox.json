@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.15.0/.schema/devbox.schema.json",
+  "packages": [
+    "python@3.12",
+    "go-task@3.44",
+    "gitflow@1.12",
+    "poetry@2.1",
+    "ffmpeg@7.1.1"
+  ],
+  "shell": {
+    "init_hook": ["source ~/.aliases", "source ./.venv/bin/activate"],
+    "scripts": {
+      "test": ["echo \"Error: no test specified\" && exit 1"]
+    }
+  }
+}
