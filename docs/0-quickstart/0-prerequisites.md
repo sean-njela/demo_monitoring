@@ -15,8 +15,8 @@ The rest of the tools are already installed in the devbox environment
 ## Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/your-repo.git
-cd your-repo
+git clone https://github.com/sean-njela/demo_monitoring.git
+cd demo_monitoring
 ```
 
 ## Start the Devbox Environment and poetry environment

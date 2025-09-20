@@ -1,0 +1,58 @@
+# -------------------------------
+# GLOBAL CONFIGURATION
+# -------------------------------
+global:
+  # How often Prometheus scrapes all targets.
+  # Default is 1m, but 30s gives higher resolution (more data points).
+  scrape_interval: 30s
+
+  # How often Prometheus evaluates alerting/recording rules.
+  # Should usually match scrape_interval unless you need faster alerting.
+  evaluation_interval: 30s
+
+# -------------------------------
+# SCRAPE CONFIGURATIONS
+# -------------------------------
+scrape_configs:
+
+  # -------------------------------
+  # NODE EXPORTER JOB
+  # -------------------------------
+  - job_name: 'node-exporter'
+    # In Swarm mode, each service gets DNS entries like "tasks.<service-name>".
+    # "tasks.node-exporter" resolves to all running replicas (1 per node in this case).
+    dns_sd_configs:
+      - names: ['tasks.node-exporter']  # Service name to resolve.
+        type: A                         # DNS record type (A = IPv4 addresses).
+        port: 9100                      # Port where node-exporter exposes /metrics.
+
+  # -------------------------------
+  # CADVISOR JOB
+  # -------------------------------
+  - job_name: 'cadvisor'
+    # Same trick: "tasks.cadvisor" resolves to all replicas of cadvisor.
+    # Since cadvisor runs in "global" mode, that means 1 per node.
+    dns_sd_configs:
+      - names: ['tasks.cadvisor']
+        type: A
+        port: 8080                      # cAdvisor default metrics port.
+
+  # -------------------------------
+  # PROMETHEUS SELF-MONITORING
+  # -------------------------------
+  - job_name: 'prometheus'
+    # Prometheus exposes its own metrics at /metrics (port 9090).
+    # Scraping itself lets you monitor its performance (scrape durations, TSDB health, memory, etc.).
+    static_configs:
+      - targets: ["prometheus:9090"]    # "prometheus" resolves to the Prometheus service inside the Swarm overlay network.
+
+
+  # --------------------------
+  # SAMPLE APP EXPORTER (Replace with yours)
+  # --------------------------
+  - job_name: 'nginx'
+    dns_sd_configs:
+      - names: ['tasks.nginx-exporter']
+        type: A
+        port: 9113
+

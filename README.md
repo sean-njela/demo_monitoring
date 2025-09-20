@@ -1,12 +1,20 @@
 <div align="center">
 
-  <!-- Optional logo -->
-  <!-- <img src="assets/logo.png" alt="project logo" width="200" /> -->
+  <!-- Row of icons -->
+  <p>
+    <img src="https://logo.svgcdn.com/d/kubernetes-plain-wordmark.svg" alt="Kubernetes" height="90" />
+    &nbsp;&nbsp;
+    <img src="https://logo.svgcdn.com/d/docker-original-wordmark.svg" alt="Docker" height="90" />
+    &nbsp;&nbsp;
+    <img src="https://logo.svgcdn.com/d/prometheus-plain-wordmark.svg" alt="Prometheus" height="90" />
+    &nbsp;&nbsp;
+    <img src="https://logo.svgcdn.com/d/grafana-original-wordmark.svg" alt="Grafana" height="90" />
+  </p>
 
-  <h1>📘 Project Title</h1>
+  <h1>🔍 Monitoring & Observability Project</h1>
 
   <p>
-    Brief description of the project. This can include what problem it solves, the tools or technologies it showcases, or what it aims to demonstrate.
+    A hands-on DevOps project showcasing end-to-end monitoring, alerting, and observability for modern infrastructure and applications. This project demonstrates how to design, deploy, and manage a production-grade monitoring stack using tools like Prometheus, cAdvisor, cephFS, Grafana, Alertmanager integrated with CI/CD pipelines and cloud-native environments (Docker Swarm/Kubernetes).
   </p>
 
   <p>
@@ -50,12 +58,25 @@
 
 ## 📸 Screenshots
 
-<!-- <div align="center"> 
+<div align="center"> 
   <img src="assets/screenshot1.png" alt="screenshot1" />
   <img src="assets/screenshot2.png" alt="screenshot2" />
-</div> -->
+</div>
 
-[▶ Watch a short demo](assets/demo-video-small.mp4)
+<!-- 
+## 📸 Demo
+<a href="https://www.example.com/">
+<div align="center"> 
+  <img src="assets/screenshot1.png" alt="screenshot 1" />
+  <img href="https://www.example.com/" src="assets/screenshot2.png" alt="screenshot 2" />
+</div>
+</a>
+
+![▶ Watch a short demo](assets/demo-video-gif.gif)
+[![▶ Watch a short demo](assets/demo-video-gif.gif)](https://www.example.com/)
+ -->
+
+![▶ Watch a short demo](assets/demo-video-gif.gif)
 
 ---
 
@@ -86,8 +107,8 @@
 2. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/your-username/your-repo.git
-   cd your-repo
+   git clone https://github.com/sean-njela/demo_monitoring.git
+   cd demo_monitoring
    ```
 
 3. **Start the Devbox Environment and poetry environment**
@@ -123,9 +144,11 @@ Docs available at: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 
 ## 📂 Features
 
-* Feature 1
-* Feature 2
-* Feature 3
+* 📈 Metrics Collection & Visualization – real-time system, application, and container insights
+* 🚨 Alerting & Incident Response – proactive notifications via Slack/Email/PagerDuty
+* 🛠 Infrastructure as Code (IaC) – automated setup with Terraform/Ansible/Helm
+* ☁️ Cloud & Container Integration – monitoring workloads on Docker & Kubernetes
+* 🔒 Reliability & Scalability – designing a monitoring stack built for production
 
 ---
 
@@ -167,22 +190,24 @@ If you do not want the gitflow tasks, you can remove the `Taskfile.gitflow.yaml`
 
 ## 📚 Troubleshooting
 
-For comprehensive troubleshooting, refer to the [Troubleshooting](docs/3-troubleshooting/overview.md) section. Or open the github pages [here](https://your-username.github.io/docs/3-troubleshooting/overview.md) and use the search bar to search your issue (USE INDIVIDUAL KEYWORDS NOT THE ISSUE NAME). 
+For comprehensive troubleshooting, refer to the [Troubleshooting](docs/3-troubleshooting/overview.md) section. Or open the github pages [here](https://sean-njela.github.io/docs/3-troubleshooting/overview.md) and use the search bar to search your issue (USE INDIVIDUAL KEYWORDS NOT THE ISSUE NAME). 
 
 ---
 
 ## 🛣️ Roadmap
 
-* [x] Feature A
-* [ ] Feature B
-* [ ] Feature C
+* [x] 📈 Metrics Collection & Visualization – real-time system, application, and container insights
+* [ ] 🚨 Alerting & Incident Response – proactive notifications via Slack/Email/PagerDuty
+* [ ] 🛠 Infrastructure as Code (IaC) – automated setup with Terraform/Ansible/Helm
+* [ ] ☁️ Cloud & Container Integration – monitoring workloads on Docker & Kubernetes
+* [ ] 🔒 Reliability & Scalability – designing a monitoring stack built for production
 
 ---
 
 ## 🤝 Contributing
 
-<a href="https://github.com/your-username/your-repo/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=your-username/your-repo" />
+<a href="https://github.com/sean-njela/demo_monitoring/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=sean-njela/demo_monitoring" />
 </a>
 
 > Contributions welcome! Open an issue or submit a PR.
@@ -197,9 +222,9 @@ Distributed under the MIT License. See `LICENSE` for more info.
 
 ## 📬 Contact
 
-Your Name – [@linkedin](https://linkedin.com/in/yourlinkedin) – [@twitter/x](https://x.com/yourtwitter) – [your.email@example.com](mailto:your.email@example.com)
+Your Name – [@linkedin](https://linkedin.com/in/sean-njela) – [@twitter/x](https://x.com/devopssean) – [seannjela@outlook.com](mailto:seannjela@outlook.com)
 
-Project Link: [https://github.com/your-username/your-repo](https://github.com/your-username/your-repo)
+Project Link: [https://github.com/sean-njela/demo_monitoring](https://github.com/sean-njela/demo_monitoring)
 
 About Me - [About Me](docs/4-about/about.md)
 
