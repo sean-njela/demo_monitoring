@@ -157,7 +157,6 @@ nav:
       - Alertmanager: 2-project/alertmanager.md
       - Docker Swarm: 2-project/swarm.md
       - Setup: 2-project/setup.md
-      - Grafana: 2-project/5-topic6.md
       # etc.
   - Tasks:
       - Tasks: 2-project/tasks/0-overview.md
