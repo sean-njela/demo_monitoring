@@ -1,0 +1,143 @@
+version: "3.8"
+
+# --------------------------
+# NETWORKS
+# --------------------------
+networks:
+  monitoring:
+    driver: overlay               # Overlay is required for multi-node Swarm networks.
+                                  # Services on this network can talk to each other using DNS names.
+
+
+# --------------------------
+# VOLUMES
+# --------------------------
+volumes:
+  grafana_data:                             # Docker-managed volume for Grafana data
+  prometheus_data:                          # Docker-managed volume for Prometheus TSDB
+
+# --------------------------
+# CONFIGS
+# --------------------------
+configs:
+  prometheus_config:
+    file: ./prometheus/prometheus.yaml   # External Prometheus config file mounted into the container.
+
+# --------------------------
+# SERVICES
+# --------------------------
+services:
+
+  # --------------------------
+  # GRAFANA (Visualization UI)
+  # --------------------------
+  grafana:
+    image: grafana/grafana:10.0.3        # Stable Grafana release.
+    restart: always                      # Restart if it crashes.
+    ports:
+      - "3000:3000"                      # Expose Grafana UI at http://<host>:3000
+    environment:
+      - GF_PANELS_DISABLE_SANITIZE_HTML=true   # Allow richer HTML in dashboards.
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}       # Admin username (default: admin).
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin} # Admin password (default: admin).
+      - GF_USERS_ALLOW_SIGN_UP=false     # Prevent users from self-signup.
+    volumes:
+      - grafana_data:/var/lib/grafana   # Persist Grafana data (dashboards, configs, users).
+    networks:
+      - monitoring
+    deploy:
+      replicas: 1                        # Single Grafana instance is usually enough.
+
+  # --------------------------
+  # PROMETHEUS (Time-series DB)
+  # --------------------------
+  prometheus:
+    image: prom/prometheus:v2.47.0       # Stable Prometheus release.
+    restart: always
+    ports:
+      - "9090:9090"                      # Expose Prometheus UI at http://<host>:9090
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yaml" # Path to config inside container.
+      - "--log.level=warn"                           # Reduce noise (options: debug, info, warn, error).
+      - "--storage.tsdb.path=/prometheus"            # Persistent storage path inside container.
+      - "--storage.tsdb.retention.time=7d"           # Retain metrics for 7 days.
+    volumes:
+      - prometheus_data:/prometheus                     # Persist time-series database to host.
+    configs:
+      - source: prometheus_config                    # Load Prometheus config (scrape jobs).
+        target: /etc/prometheus/prometheus.yaml
+    networks:
+      - monitoring
+    deploy:
+      replicas: 1                                    # Single Prometheus is fine for testing/labs.
+
+  # --------------------------
+  # CADVISOR (Container Metrics)
+  # --------------------------
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2          # Container-level metrics collector.
+    command: -logtostderr -docker_only
+    ports:
+      - "8080:8080"                                  # Expose cAdvisor UI at http://<host>:8080 (optional).
+    volumes:                                         # Mounts required to read container stats.
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    networks:
+      - monitoring
+    deploy:
+      mode: global                                   # Run one cAdvisor per Swarm node automatically.
+
+  # --------------------------
+  # NODE EXPORTER (Host Metrics)
+  # --------------------------
+  node-exporter:
+    image: prom/node-exporter:v1.5.0                 # Host-level metrics collector.
+    ports:
+      - "9100:9100"                                  # Expose node-exporter metrics at /metrics
+    command:                                         # Override defaults for containerized use.
+      - "--path.sysfs=/host/sys"
+      - "--path.procfs=/host/proc"
+      - "--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)"
+      - "--no-collector.ipvs"
+    volumes:                                         # Mount host /proc and /sys for metrics.
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    networks:
+      - monitoring
+    deploy:
+      mode: global                                   # Run one node-exporter per Swarm node automatically.
+
+
+  # --------------------------
+  # NGINX EXPORTER (1 per cluster)
+  # --------------------------
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:0.11.0
+    command:
+      - -nginx.scrape-uri=http://nginx-app:80/stub_status
+    ports:
+      - "9113:9113"                # Metrics endpoint → http://localhost:9113/metrics
+    networks:
+      - monitoring
+    deploy:
+      replicas: 1
+
+
+  # --------------------------
+  # SAMPLE APP (Replace with yours)
+  # --------------------------
+  nginx-app:
+    image: nginx:alpine
+    ports:
+      - "8081:80"        # external port for testing in browser
+    networks:
+      - monitoring
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    deploy:
+      replicas: 1        # run 3 replicas
+      restart_policy:
+        condition: on-failure

@@ -8,7 +8,7 @@
     "ffmpeg@7.1.1"
   ],
   "shell": {
-    "init_hook": ["source ~/.aliases", "source ./.venv/bin/activate"],
+    "init_hook": ["source ~/.aliases", "poetry install", "poetry lock", "source ./.venv/bin/activate"],
     "scripts": {
       "test": ["echo \"Error: no test specified\" && exit 1"]
     }

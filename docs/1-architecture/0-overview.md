@@ -1,73 +1,94 @@
 # 🧱 System Architecture Overview
 
-This section provides a high-level overview of the architecture and design decisions behind the project. It outlines the system's core components, their responsibilities, and how they interact.
+This section provides a **high-level overview of the monitoring and observability stack** used in this project. It highlights the **core components**, their responsibilities, and how they work together to provide **end-to-end monitoring, alerting, and visualization** for modern infrastructure and applications.
 
 ---
 
 ## 📐 Design Philosophy
 
-Summarize your approach or values. Examples:
+Our monitoring stack is built around a few guiding principles:
 
-- Modular and composable
-- Secure by default
-- Automation-first (e.g., IaC, CI/CD)
-- Portable/local-dev friendly
+* **Modular and Composable** → Each tool has a clear responsibility (metrics, alerts, visualization).
+* **Cloud-Native** → Runs seamlessly in containerized/Kubernetes environments.
+* **Automation-First** → Designed for IaC and CI/CD pipelines.
+* **Production-Ready** → Secure defaults, scalable, and extensible.
+* **Developer-Friendly** → Easy to run locally (e.g., with Docker Compose or Kind).
 
 ---
 
 ## 🧩 Core Components
 
-### 1. Infrastructure
+### 1. Metrics Collection (cAdvisor)
 
-- Describe how infrastructure is provisioned (e.g., Terraform, Pulumi)
-- Where it's deployed (e.g., local Kind cluster, cloud, etc.)
-- Example:
-  - **Kind** cluster created via `task dev`
-  - **Terraform** used to manage Argo CD and related resources
+* **cAdvisor** runs on each node to collect **container-level resource usage** (CPU, memory, disk, network).
+* Integrated with Kubernetes via the **kubelet**.
+* Exposes metrics at `/metrics` in **Prometheus format**.
 
-### 2. CI/CD
+### 2. Monitoring & Storage (Prometheus)
 
-- What tools handle deployment?
-- Example:
-  - **Argo CD** handles Kubernetes app delivery using the **App of Apps** pattern
-  - Image updates via **argocd-image-updater**
-  - Optional notification layer (e.g., Slack integration)
+* **Prometheus** scrapes metrics from cAdvisor, node exporters, and other exporters.
+* Stores data in its **time-series database (TSDB)**.
+* Provides the **PromQL query language** for powerful analysis.
 
-### 3. Secrets & Configuration
+### 3. Visualization (Grafana)
 
-- Mention secret handling (e.g., Sealed Secrets, SOPS, Vault)
-- Config management tools (e.g., Helm, Kustomize)
+* **Grafana** connects to Prometheus and displays metrics in **dashboards**.
+* Includes **pre-built dashboards** for containers, nodes, and Kubernetes clusters.
+* Enables engineers to explore, visualize, and share insights.
+
+### 4. Alerting (Alertmanager)
+
+* **Alertmanager** receives alerts from Prometheus.
+* Handles **deduplication, grouping, and routing** of alerts.
+* Sends notifications via **Slack, Email, PagerDuty**, etc.
 
 ---
 
 ## 🔀 Architecture Diagram
 
-Add a visual overview of your system if available.
+```mermaid
+flowchart TD
 
-![System Diagram](../assets/architecture-diagram.png)
+    subgraph Node["Kubernetes Node / Host"]
+        subgraph Containers["Containers"]
+            A1["App Container A"]
+            A2["App Container B"]
+        end
+        C["cAdvisor"]
+    end
 
-If not available yet, note:
+    A1 --> C
+    A2 --> C
 
-*Architecture diagram to be added in a future update.*
+    C --> P["Prometheus"]
+    P --> G["Grafana Dashboards"]
+    P --> A["Alertmanager"]
+
+    G --> U["User (SRE/DevOps)"]
+    A --> U
+```
 
 ---
 
 ## 🔄 Data / Control Flow
 
-Explain the high-level lifecycle or data flow:
-
-1. User runs `task dev`
-2. Terraform provisions resources
-3. Argo CD bootstraps itself and deploys other apps
-4. Image updater checks container registries and pushes updates
-5. Notifications triggered via webhook → Slack
+1. **Containers** run applications and consume resources.
+2. **cAdvisor** collects resource usage metrics from the kernel (cgroups).
+3. **Prometheus** scrapes metrics from cAdvisor (and other exporters).
+4. **Prometheus TSDB** stores time-series data.
+5. **Grafana** queries Prometheus to render dashboards and visualizations.
+6. **Prometheus rules** evaluate alert conditions (e.g., CPU > 90%).
+7. **Alertmanager** routes alerts to Slack/email.
+8. **Users (SRE/DevOps)** view dashboards and respond to alerts.
 
 ---
 
 ## 🧭 Related Pages
 
 * [Quickstart: Getting Started](../0-quickstart/1-getting-started.md)
-* [Topics / Application Layer](../2-project/0-topic1.md)
-* [Taskfile Automation](../2-project/tasks/0-overview.md)
+* [Prometheus Notes](../2-project/prometheus.md)
+* [cAdvisor Notes](../2-project/cadvisor.md)
+* [Grafana Notes](../2-project/grafana.md)
+* [Alertmanager Notes](../2-project/alertmanager.md)
 
 ---

@@ -139,6 +139,6 @@ A typical flow using this Taskfile might look like:
 
 ## 📬 Contact
 
-For issues or suggestions related to automation and task structure, open an issue or contact the maintainer at [your.email@example.com](mailto:your.email@example.com).
+For issues or suggestions related to automation and task structure, open an issue or contact the maintainer at [seannjela@outlook.com](mailto:seannjela@outlook.com).
 
 ---

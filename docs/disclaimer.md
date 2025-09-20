@@ -44,7 +44,7 @@ All opinions, techniques, and practices shared here reflect **my personal learni
 
 ## 📜 License
 
-This project is licensed under the [MIT](https://github.com/your-username/your-repo/blob/main/LICENSE), which permits reuse, modification, and distribution—**with proper attribution**.
+This project is licensed under the [MIT](https://github.com/sean-njela/demo_monitoring/blob/main/LICENSE), which permits reuse, modification, and distribution—**with proper attribution**.
 
 ---
 
@@ -52,5 +52,5 @@ This project is licensed under the [MIT](https://github.com/your-username/your-r
 
 If you spot issues, risks, or have questions about how something works, feel free to reach out:
 
-- 📧 [your.email@example.com](mailto:your.email@example.com)  
-- 🐙 [GitHub Issues](https://github.com/your-username/your-repo/issues)
+- 📧 [seannjela@outlook.com](mailto:seannjela@outlook.com)  
+- 🐙 [GitHub Issues](https://github.com/sean-njela/demo_monitoring/issues)

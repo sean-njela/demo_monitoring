@@ -63,7 +63,7 @@ task cleanup-all # to cleanup everything (local and production)
 If you get stuck:
 
 * Check the [Troubleshooting](../3-troubleshooting/0-overview.md) guide.
-* Open an issue on [GitHub](https://github.com/your-username/your-repo/issues)
+* Open an issue on [GitHub](https://github.com/sean-njela/demo_monitoring/issues)
 
 ---
 
