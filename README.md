@@ -59,8 +59,9 @@
 ## 📸 Screenshots
 
 <div align="center"> 
-  <img src="assets/screenshot1.png" alt="screenshot1" />
-  <img src="assets/screenshot2.png" alt="screenshot2" />
+  <img src="assets/screenshot1.png" alt="screenshot1" height="500"/>
+  <img src="assets/screenshot2.png" alt="screenshot2" height="500"/>
+  <img src="assets/screenshot3.png" alt="screenshot3" height="635"/>
 </div>
 
 <!-- 
@@ -76,7 +77,7 @@
 [![▶ Watch a short demo](assets/demo-video-gif.gif)](https://www.example.com/)
  -->
 
-![▶ Watch a short demo](assets/demo-video-gif.gif)
+<!-- ![▶ Watch a short demo](assets/demo-video-gif.gif) -->
 
 ---
 
@@ -125,9 +126,42 @@
 ## 🚀 Quick Start
 
 ```bash
-# this one command will run all commands necessary to setup the environment. yes, really.
-task dev
+task dev # this one command will run all commands necessary to setup the environment. yes, really.
+
+# GIVE EVERYTHING A MINUTE TO SETUP THEN
+task status # check if all containers are running (should be 6 services)
 ```
+
+Everything ran well if you see the following output:
+
+```bash
+task: [check] docker stack ls
+[check] NAME         SERVICES
+[check] monitoring   6
+task: [check] docker service ls
+[check] ID             NAME                        MODE         REPLICAS   IMAGE                                    PORTS
+[check] ujlbiiqw5rhn   monitoring_cadvisor         global       1/1        gcr.io/cadvisor/cadvisor:v0.47.2         *:8080->8080/tcp
+[check] das3w195kcng   monitoring_grafana          replicated   1/1        grafana/grafana:10.0.3                   *:3000->3000/tcp
+[check] p05gmk6qgf99   monitoring_nginx-app        replicated   1/1        nginx:alpine                             *:8081->80/tcp
+[check] ory4c3aac4jp   monitoring_nginx-exporter   replicated   1/1        nginx/nginx-prometheus-exporter:0.11.0   *:9113->9113/tcp
+[check] kfklvia0bffi   monitoring_node-exporter    global       1/1        prom/node-exporter:v1.5.0                *:9100->9100/tcp
+[check] papibwx1f4x7   monitoring_prometheus       replicated   1/1        prom/prometheus:v2.47.0                  *:9090->9090/tcp
+```
+
+Then run the following to expose the urls:
+
+```bash
+task info
+```
+
+As you make changes you can run the following command to refresh/redeploy the stack:
+
+```bash
+task deploy
+# and as a follow up run:
+task status
+```
+For more info on redeployments, consult the docs, under [safe-workflow-for-updating-a-swarm-stack](http://localhost:8000/demo_monitoring/2-project/swarm/#safe-workflow-for-updating-a-swarm-stack)
 
 ---
 ## 📚 Documentation

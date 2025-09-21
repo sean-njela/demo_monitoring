@@ -121,54 +121,57 @@ docker service rollback web
 ### docker-compose.yml
 
 ```yaml
-version: "3.9"
+version: "3.9"               # Specifies the Compose file format version (3.9 supports the latest Swarm features).
 
-services:
-  api:
-    image: ghcr.io/acme/api:1.2.3
-    ports:
-      - target: 8080
-        published: 8080
-        protocol: tcp
-        mode: ingress   # or host
-    networks: [appnet]
-    deploy:
-      replicas: 4
-      update_config:
-        parallelism: 1
-        order: start-first
-        delay: 10s
-        failure_action: rollback
-      rollback_config:
-        parallelism: 2
-      restart_policy:
-        condition: on-failure
-        delay: 3s
-        max_attempts: 3
-      resources:
-        limits:
-          cpus: "1.0"
-          memory: 512M
-        reservations:
-          cpus: "0.25"
-          memory: 128M
-      placement:
-        constraints:
-          - node.role == worker
-          - node.labels.zone == eu-central
-        preferences:
-          - spread: node.labels.az
+services:                    # Defines the services (containers) that will run in this stack.
+  api:                       # First service: the "api" service.
+    image: ghcr.io/acme/api:1.2.3   # Uses a prebuilt image from GitHub Container Registry, version 1.2.3.
+    ports:                   # Maps container ports to the host / cluster.
+      - target: 8080         # The port inside the container.
+        published: 8080      # The port exposed on the host or ingress load balancer.
+        protocol: tcp        # Communication protocol (TCP).
+        mode: ingress        # Port publishing mode:
+                             # - ingress: load-balanced across nodes in the swarm.
+                             # - host: directly bound to the host's interface.
+    networks: [appnet]       # Connects this service to the "appnet" network.
+    deploy:                  # Swarm-specific deployment configuration.
+      replicas: 4            # Runs 4 container replicas of the "api" service.
+      update_config:         # Strategy for rolling updates.
+        parallelism: 1       # Update one container at a time.
+        order: start-first   # Start the new task before stopping the old one (minimizes downtime).
+        delay: 10s           # Wait 10 seconds between updating tasks.
+        failure_action: rollback # Roll back to the previous version if the update fails.
+      rollback_config:       # Strategy for rolling back.
+        parallelism: 2       # Roll back two tasks at the same time.
+      restart_policy:        # Policy for restarting failed containers.
+        condition: on-failure # Only restart when the container exits with an error.
+        delay: 3s            # Wait 3 seconds before attempting a restart.
+        max_attempts: 3      # Retry up to 3 times before giving up.
+      resources:             # Resource allocation settings.
+        limits:              # Hard limits the container cannot exceed.
+          cpus: "1.0"        # Maximum 1 CPU core.
+          memory: 512M       # Maximum 512 MB of RAM.
+        reservations:        # Guaranteed minimum resources.
+          cpus: "0.25"       # Reserve at least 0.25 CPU cores.
+          memory: 128M       # Reserve at least 128 MB of RAM.
+      placement:             # Rules for scheduling service tasks.
+        constraints:         # Hard rules: must match or task won’t be placed.
+          - node.role == worker       # Only run on worker nodes (not managers).
+          - node.labels.zone == eu-central # Only run in nodes labeled as "eu-central".
+        preferences:         # Soft rules: Swarm will try to balance tasks accordingly.
+          - spread: node.labels.az   # Spread containers evenly across availability zones.
 
-  worker:
-    image: ghcr.io/acme/worker:2.0
-    deploy:
-      mode: global
-    networks: [appnet]
+  worker:                    # Second service: the "worker" service.
+    image: ghcr.io/acme/worker:2.0   # Uses a different image for worker tasks.
+    deploy:                  # Deployment configuration.
+      mode: global           # Runs exactly one container on every available node.
+    networks: [appnet]       # Connects workers to the same "appnet" network.
 
-networks:
-  appnet:
-    driver: overlay
-    attachable: true
+networks:                    # Defines custom networks for communication.
+  appnet:                    # Overlay network used by both services.
+    driver: overlay          # Overlay networks span multiple nodes in a Swarm.
+    attachable: true         # Allows standalone containers to connect to this network.
+
 ```
 
 Deploy:
@@ -180,6 +183,200 @@ docker stack services acme
 docker stack ps acme
 docker stack rm acme
 ```
+
+## 🔹 Running `docker stack deploy` multiple times
+
+When you run:
+
+```bash
+docker stack deploy -c docker-compose.yml monitoring
+```
+
+* Docker **compares the new stack file** with the **existing deployed services** in the `monitoring` stack.
+* Any **changes** in the compose file (image tag, environment, configs, volumes, networks, etc.) will cause Docker Swarm to **update the service(s)**.
+* Any **unchanged services** will remain running as they are.
+
+---
+
+### ✅ Scenarios
+
+1. **No changes in the file**
+
+   * Swarm does nothing (idempotent).
+   * Services stay running, volumes unchanged, no restart.
+
+2. **Service definition changed** (e.g., new image tag, different environment vars, config mounts)
+
+   * Swarm will **roll out an update** for that service:
+
+     * Stops old tasks.
+     * Starts new tasks with updated definition.
+   * Update strategy (rolling update, restart policy, etc.) applies.
+
+3. **New service added**
+
+   * Swarm creates it and attaches it to the stack.
+
+4. **Service removed from file**
+
+   * Swarm removes it from the running stack.
+
+5. **Configs or secrets changed**
+
+   * They get new versions (`config-XYZ`) and services referencing them are updated.
+
+---
+
+### 🔹 Volumes
+
+* **Named volumes** (like `grafana_data:` or `prometheus_data:` in your file) are **persistent**.
+* Running `docker stack deploy` won’t wipe them. Grafana dashboards, Prometheus TSDB, etc. stay intact.
+
+---
+
+### 🔹 Networks
+
+* Overlay networks defined in the stack are reused.
+* If they already exist, Swarm just attaches new/updated services to them.
+
+---
+
+### ⚠️ Important notes
+
+* If you change **ports mapping** (e.g., `3000:3000 → 8080:3000`), the service will be recreated and exposed differently.
+* If you remove `grafana_data` volume from the spec, **existing data is not deleted**, but the container won’t mount it anymore.
+* If you deploy with the same stack name but a **different compose file structure**, Swarm will reconcile everything to match the new definition (adds, removes, updates).
+
+---
+
+## ⚖️ Summary
+
+* `docker stack deploy` is **safe and repeatable**.
+* Running it multiple times with the same file = **no effect**.
+* Running it with changes = **services updated accordingly**.
+* Data in named volumes persists across deploys.
+
+Great 👍 Let’s build a **safe update workflow** for your monitoring stack (Prometheus + Grafana + exporters). The main goal is:
+
+* Upgrade services (Grafana, Prometheus, exporters)
+* Apply changes to configs/dashboards
+* Keep persistent data (Grafana DB, Prometheus TSDB) safe
+
+---
+
+# 🔹 Safe Workflow for Updating a Swarm Stack
+
+### 1. Use **named volumes** for persistent data
+
+You already have these in your stack:
+
+```yaml
+volumes:
+  grafana_data:
+  prometheus_data:
+```
+
+* `grafana_data` keeps users, orgs, API keys, preferences.
+* `prometheus_data` keeps metrics history.
+* These volumes survive `docker stack deploy` updates.
+
+⚠️ Never replace them with **bind mounts** unless you know exactly how you want to manage filesystem permissions and upgrades.
+
+---
+
+### 2. Version your configs and dashboards
+
+* Keep `prometheus.yml` and all Grafana provisioning files in Git.
+* Commit dashboard JSONs with pinned revisions from Grafana.com.
+* Treat them as **immutable artifacts** — no editing live inside containers.
+
+---
+
+### 3. Safely update the stack
+
+Run:
+
+```bash
+docker stack deploy -c docker-compose.yml monitoring
+```
+
+Swarm will:
+
+* Compare current services with updated spec.
+* Restart only what changed.
+* Keep volumes intact.
+
+---
+
+### 4. Roll out updates without downtime
+
+If you want smooth upgrades (especially for Grafana/Prometheus), use a rolling update strategy:
+
+```yaml
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first   # start new before stopping old
+      restart_policy:
+        condition: on-failure
+```
+
+`order: start-first` ensures Prometheus/Grafana keep running while updates roll out.
+
+---
+
+### 5. Back up before big changes
+
+For extra safety:
+
+**Grafana data (users, prefs, API keys, custom dashboards):**
+
+```bash
+docker run --rm -v grafana_data:/data alpine tar czf - /data > grafana_backup_$(date +%F).tar.gz
+```
+
+**Prometheus TSDB:**
+
+```bash
+docker run --rm -v prometheus_data:/data alpine tar czf - /data > prometheus_backup_$(date +%F).tar.gz
+```
+
+---
+
+### 6. Upgrade images explicitly
+
+* Pin images to known versions (e.g., `grafana/grafana:10.0.3`)
+* When you want to upgrade, change the tag in `docker-compose.yml`:
+
+```yaml
+    image: grafana/grafana:10.1.2
+```
+
+* Redeploy with `docker stack deploy`.
+* Swarm will do a rolling update with data volumes untouched.
+
+---
+
+### 7. Apply new files/configs e.g
+
+* Add/update JSON files under `./grafana/dashboards/`.
+* Update `prometheus.yml` or provisioning YAMLs if needed.
+* Commit changes to Git.
+* Run `docker stack deploy -c docker-compose.yml monitoring`.
+* Grafana will auto-load updated dashboards (within \~10s).
+
+---
+
+# ⚖️ Summary Workflow
+
+1. Store **configs + dashboards in Git**
+2. Use **named volumes** for persistence
+3. Before upgrades → **backup volumes**
+4. Update `docker-compose.yml` → new image tags, new configs
+5. Run `docker stack deploy -c docker-compose.yml monitoring`
+6. Swarm applies changes safely, volumes persist, dashboards auto-provision
 
 ---
 
@@ -363,6 +560,10 @@ docker stack deploy -c stack.yml data
 docker swarm init | join | leave --force
 docker node ls | inspect | update --label-add team=payments <node>
 docker node update --availability drain|active <node>
+docker node inspect <NODE> --pretty          # Inspect node details
+docker node update --availability drain <NODE>   # Drain node (no new tasks scheduled)
+docker node update --availability active <NODE>  # Reactivate node
+docker node ps <NODE>                        # Show tasks running on a node
 ```
 
 ### Services
@@ -426,6 +627,9 @@ Design storage thoughtfully, keep **odd manager counts**, and use **stacks** + *
 # 🐳 Cheat Sheet
 
 ```bash
+# Show overall swarm status
+docker info
+
 # Initialize Swarm on the first node
 docker swarm init
 
@@ -437,6 +641,14 @@ docker swarm join-token manager
 
 # Join a worker/manager node to the cluster
 docker swarm join --token <TOKEN> <MANAGER-IP>:2377
+
+# Promote a worker to manager
+docker node promote <NODE HOST NAME>
+
+# Demote a manager to worker
+docker node demote <NODE HOST NAME>
+
+# NODE HOST NAME is found using the node ls command after joining the swarm
 ```
 
 ---

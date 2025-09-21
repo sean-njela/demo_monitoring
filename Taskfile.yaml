@@ -59,6 +59,8 @@ vars:
   PROJECT_NAME: '{{.PROJECT_NAME | default "my-project"}}'
   TIMESTAMP:
     sh: date '+%Y%m%d%H%M%S'
+  PROM_URL: "Grafana → http://localhost:3000 (admin/admin)"
+  GRAF_URL: "Prometheus → http://localhost:9090"
 
 includes:
   # Example include of shared tasks
@@ -83,9 +85,11 @@ tasks:
   dev:
     desc: "🏗️ Provision and start local development environment"
     cmds:
-      - pnpm run build
-      - pnpm run start
-     
+      - docker swarm init || true
+      - task: deploy
+      - task: status
+      - task: info
+
   # ─── Production Task ─────────────────────────────────────────────────────────
   prod:
     desc: "🚀 Provision and deploy to production"
@@ -93,6 +97,9 @@ tasks:
   # ─── Cleanup Tasks ───────────────────────────────────────────────────────────
   cleanup-dev:
     desc: "🔁 Cleanup development resources only"
+    cmds:
+      - docker stack rm monitoring
+      - docker swarm leave --force
 
   cleanup-prod:
     desc: "🔐 Cleanup production resources only"
@@ -115,6 +122,27 @@ tasks:
     desc: "🌐 Serve docs locally -> http://127.0.0.1:8000/docs/"
     cmds:
       - poetry run mkdocs serve --clean
+
+
+  # # # # # # # ---------- # # # # # # # ---------- # # # # # # #
+  # Misc
+  # # # # # # # ---------- # # # # # # # ---------- # # # # # # #
+  info:
+    desc: "🌐 URLs to visit"
+    cmds:
+      - echo "Prometheus -> {{.PROM_URL}}"
+      - echo "Grafana -> {{.GRAF_URL}}"
+
+  status:
+    desc: "Check if everything is running"
+    cmds:
+      - docker stack ls
+      - docker service ls
+
+  deploy:
+    desc: "Deploy the stack onto the swarm node"
+    cmds:
+      - docker stack deploy -c docker-compose.yaml monitoring
 
   # # # # # # # ---------- # # # # # # # ---------- # # # # # # #
   # FFMPEG Compression
