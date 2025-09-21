@@ -156,7 +156,9 @@ nav:
       - Grafana: 2-project/grafana.md
       - Alertmanager: 2-project/alertmanager.md
       - Docker Swarm: 2-project/swarm.md
+      - Portainer: 2-project/portainer.md
       - Setup: 2-project/setup.md
+      - How to Read Dashboards: 2-project/reading_dashboards.md
       # etc.
   - Tasks:
       - Tasks: 2-project/tasks/0-overview.md

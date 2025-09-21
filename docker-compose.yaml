@@ -62,7 +62,7 @@ services:
       - "--config.file=/etc/prometheus/prometheus.yaml" # Path to config inside container.
       - "--log.level=warn"                           # Reduce noise (options: debug, info, warn, error).
       - "--storage.tsdb.path=/prometheus"            # Persistent storage path inside container.
-      - "--storage.tsdb.retention.time=7d"           # Retain metrics for 7 days.
+      - "--storage.tsdb.retention.time=7d"           # Retain metrics for 7 days. 15-30 in Prod.
     volumes:
       - prometheus_data:/prometheus                     # Persist time-series database to host.
     configs:
