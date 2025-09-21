@@ -43,6 +43,8 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false     # Prevent users from self-signup.
     volumes:
       - grafana_data:/var/lib/grafana   # Persist Grafana data (dashboards, configs, users).
+      - ./grafana/provisioning:/etc/grafana/provisioning  # persist dashboard and data source provisioning data
+      - ./grafana/dashboards:/etc/grafana/dashboards  # Persist the dashboard json files
     networks:
       - monitoring
     deploy:

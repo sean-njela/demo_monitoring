@@ -80,7 +80,7 @@ These examples are included as practical demos in this documentation.
 
 * ⚡ [Getting Started](0-quickstart/1-getting-started.md)  
 * 📊 [System Architecture](1-architecture/0-overview.md)  
-* 📝 [PromQL & Features](2-project/0-topic1.md)  
+* 📝 [PromQL & Features](2-project/prometheus.md)  
 * 🧑‍💼 [About Me](4-about/0-about.md)  
 
 ---

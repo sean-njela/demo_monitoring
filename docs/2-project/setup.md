@@ -335,7 +335,7 @@ That will automatically resolve to all replicas.
 
 ---
 
-# 🐳 Docker Swarm + Monitoring
+## 🐳 Docker Swarm + Monitoring
 
 
 Now let’s go through the **Swarm approach** carefully, because it’s very relevant for our use-case (monitoring multiple replicas with Prometheus + Grafana).
@@ -526,7 +526,7 @@ In Swarm, Prometheus + Grafana can automatically discover **all replicas** of yo
 
 ---
 
-# Our Setup
+## Our Setup
 
 ## Final Files
 
@@ -537,84 +537,148 @@ Use this Swarm-ready compose (note: `container_name` is removed because Swarm ma
 ```yaml
 version: "3.8"
 
+# --------------------------
+# NETWORKS
+# --------------------------
 networks:
   monitoring:
-    driver: overlay   # overlay is required for Swarm services
+    driver: overlay               # Overlay is required for multi-node Swarm networks.
+                                  # Services on this network can talk to each other using DNS names.
 
+
+# --------------------------
+# VOLUMES
+# --------------------------
+volumes:
+  grafana_data:                             # Docker-managed volume for Grafana data
+  prometheus_data:                          # Docker-managed volume for Prometheus TSDB
+
+# --------------------------
+# CONFIGS
+# --------------------------
+configs:
+  prometheus_config:
+    file: ./prometheus/prometheus.yaml   # External Prometheus config file mounted into the container.
+
+# --------------------------
+# SERVICES
+# --------------------------
 services:
+
+  # --------------------------
+  # GRAFANA (Visualization UI)
+  # --------------------------
   grafana:
-    image: grafana/grafana:10.0.3
-    restart: always
+    image: grafana/grafana:10.0.3        # Stable Grafana release.
+    restart: always                      # Restart if it crashes.
     ports:
-      - "3000:3000"
+      - "3000:3000"                      # Expose Grafana UI at http://<host>:3000
     environment:
-      - GF_PANELS_DISABLE_SANITIZE_HTML=true
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
-      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_PANELS_DISABLE_SANITIZE_HTML=true   # Allow richer HTML in dashboards.
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}       # Admin username (default: admin).
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin} # Admin password (default: admin).
+      - GF_USERS_ALLOW_SIGN_UP=false     # Prevent users from self-signup.
     volumes:
-      - ./grafana/grafana-volume:/var/lib/grafana
+      - grafana_data:/var/lib/grafana   # Persist Grafana data (dashboards, configs, users).
     networks:
       - monitoring
     deploy:
-      replicas: 1
+      replicas: 1                        # Single Grafana instance is usually enough.
 
+  # --------------------------
+  # PROMETHEUS (Time-series DB)
+  # --------------------------
   prometheus:
-    image: prom/prometheus:v2.47.0
+    image: prom/prometheus:v2.47.0       # Stable Prometheus release.
     restart: always
     ports:
-      - "9090:9090"
+      - "9090:9090"                      # Expose Prometheus UI at http://<host>:9090
     command:
-      - "--config.file=/etc/prometheus/prometheus.yaml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=7d"
-      - "--log.level=warn"
+      - "--config.file=/etc/prometheus/prometheus.yaml" # Path to config inside container.
+      - "--log.level=warn"                           # Reduce noise (options: debug, info, warn, error).
+      - "--storage.tsdb.path=/prometheus"            # Persistent storage path inside container.
+      - "--storage.tsdb.retention.time=7d"           # Retain metrics for 7 days.
     volumes:
-      - ./prometheus:/prometheus
+      - prometheus_data:/prometheus                     # Persist time-series database to host.
     configs:
-      - source: prometheus_config
+      - source: prometheus_config                    # Load Prometheus config (scrape jobs).
         target: /etc/prometheus/prometheus.yaml
     networks:
       - monitoring
     deploy:
-      replicas: 1
+      replicas: 1                                    # Single Prometheus is fine for testing/labs.
 
+  # --------------------------
+  # CADVISOR (Container Metrics)
+  # --------------------------
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    image: gcr.io/cadvisor/cadvisor:v0.47.2          # Container-level metrics collector.
     command: -logtostderr -docker_only
     ports:
-      - "8080:8080"
-    volumes:
+      - "8080:8080"                                  # Expose cAdvisor UI at http://<host>:8080 (optional).
+    volumes:                                         # Mounts required to read container stats.
       - /:/rootfs:ro
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
+      - /dev/disk:/dev/disk:ro
     networks:
       - monitoring
     deploy:
-      mode: global   # one per node
+      mode: global                                   # Run one cAdvisor per Swarm node automatically.
 
+  # --------------------------
+  # NODE EXPORTER (Host Metrics)
+  # --------------------------
   node-exporter:
-    image: prom/node-exporter:v1.5.0
-    command:
+    image: prom/node-exporter:v1.5.0                 # Host-level metrics collector.
+    ports:
+      - "9100:9100"                                  # Expose node-exporter metrics at /metrics
+    command:                                         # Override defaults for containerized use.
       - "--path.sysfs=/host/sys"
       - "--path.procfs=/host/proc"
       - "--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)"
       - "--no-collector.ipvs"
-    ports:
-      - "9100:9100"
-    volumes:
+    volumes:                                         # Mount host /proc and /sys for metrics.
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
     networks:
       - monitoring
     deploy:
-      mode: global   # one per node
+      mode: global                                   # Run one node-exporter per Swarm node automatically.
 
-configs:
-  prometheus_config:
-    file: ./prometheus/prometheus.yaml
+
+  # --------------------------
+  # NGINX EXPORTER (1 per cluster)
+  # --------------------------
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:0.11.0
+    command:
+      - -nginx.scrape-uri=http://nginx-app:80/stub_status
+    ports:
+      - "9113:9113"                # Metrics endpoint → http://localhost:9113/metrics
+    networks:
+      - monitoring
+    deploy:
+      replicas: 1
+
+
+  # --------------------------
+  # SAMPLE APP (Replace with yours)
+  # --------------------------
+  nginx-app:
+    image: nginx:alpine
+    ports:
+      - "8081:80"        # external port for testing in browser
+    networks:
+      - monitoring
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    deploy:
+      replicas: 1        # run 3 replicas
+      restart_policy:
+        condition: on-failure
+
 ```
 
 ---
@@ -622,26 +686,63 @@ configs:
 ## 2. `prometheus/prometheus.yaml`
 
 ```yaml
+# -------------------------------
+# GLOBAL CONFIGURATION
+# -------------------------------
 global:
+  # How often Prometheus scrapes all targets.
+  # Default is 1m, but 30s gives higher resolution (more data points).
   scrape_interval: 30s
+
+  # How often Prometheus evaluates alerting/recording rules.
+  # Should usually match scrape_interval unless you need faster alerting.
   evaluation_interval: 30s
 
+# -------------------------------
+# SCRAPE CONFIGURATIONS
+# -------------------------------
 scrape_configs:
-  - job_name: 'node-exporter'
-    dns_sd_configs:
-      - names: ['tasks.node-exporter']
-        type: A
-        port: 9100
 
+  # -------------------------------
+  # NODE EXPORTER JOB
+  # -------------------------------
+  - job_name: 'node-exporter'
+    # In Swarm mode, each service gets DNS entries like "tasks.<service-name>".
+    # "tasks.node-exporter" resolves to all running replicas (1 per node in this case).
+    dns_sd_configs:
+      - names: ['tasks.node-exporter']  # Service name to resolve.
+        type: A                         # DNS record type (A = IPv4 addresses).
+        port: 9100                      # Port where node-exporter exposes /metrics.
+
+  # -------------------------------
+  # CADVISOR JOB
+  # -------------------------------
   - job_name: 'cadvisor'
+    # Same trick: "tasks.cadvisor" resolves to all replicas of cadvisor.
+    # Since cadvisor runs in "global" mode, that means 1 per node.
     dns_sd_configs:
       - names: ['tasks.cadvisor']
         type: A
-        port: 8080
+        port: 8080                      # cAdvisor default metrics port.
 
+  # -------------------------------
+  # PROMETHEUS SELF-MONITORING
+  # -------------------------------
   - job_name: 'prometheus'
+    # Prometheus exposes its own metrics at /metrics (port 9090).
+    # Scraping itself lets you monitor its performance (scrape durations, TSDB health, memory, etc.).
     static_configs:
-      - targets: ["prometheus:9090"]
+      - targets: ["prometheus:9090"]    # "prometheus" resolves to the Prometheus service inside the Swarm overlay network.
+
+
+  # --------------------------
+  # SAMPLE APP EXPORTER (Replace with yours)
+  # --------------------------
+  - job_name: 'nginx'
+    dns_sd_configs:
+      - names: ['tasks.nginx-exporter']
+        type: A
+        port: 9113
 ```
 
 👉 Notice:
@@ -651,7 +752,7 @@ scrape_configs:
 
 ---
 
-# 🛠 Step-by-Step Setup
+## 🛠 Step-by-Step Setup
 
 ### 1. Initialize Swarm
 
@@ -708,7 +809,7 @@ docker service ps monitoring_cadvisor
 
 ---
 
-# ✅ End Result
+## ✅ End Result
 
 * **Node Exporter** (global service) → 1 instance per node.
 * **cAdvisor** (global service) → 1 instance per node.
@@ -803,3 +904,121 @@ That means:
 ---
 
 ⚡ If all those checks succeed, your **full monitoring stack** is good to go: infra + containers + Nginx app.
+
+---
+
+## ✅ Automating Grafana Datasource & Dashboard Setup
+
+Grafana supports *provisioning* via config files. This means you can pre-bake datasources and dashboards so that Grafana comes up ready to use — no manual setup.
+
+---
+
+## 1. Provision the Prometheus datasource
+
+Create `./grafana/provisioning/datasources/datasource.yaml`:
+
+```yaml
+apiVersion: 1                # Required: API version for Grafana provisioning configs.
+
+datasources:
+  - name: Prometheus         # Friendly name of the datasource (shown in Grafana).
+    type: prometheus         # The datasource plugin type (Prometheus in this case).
+    access: proxy            # Grafana proxies queries to Prometheus (recommended).
+    url: http://prometheus:9090   # Internal DNS name of Prometheus service in Swarm.
+    isDefault: true          # Marks this datasource as the default one.
+
+```
+
+---
+
+## 2. Provision dashboards
+
+Create `./grafana/provisioning/dashboards/dashboard.yaml`:
+
+```yaml
+apiVersion: 1                # Provisioning config schema version.
+
+providers:
+  - name: 'default'          # Provider name (arbitrary, but must be unique).
+    orgId: 1                 # Organization ID (Grafana default org = 1).
+    folder: ''               # Put dashboards into the root folder.
+    type: file               # Provision from local files.
+    disableDeletion: false   # Allow Grafana UI users to delete dashboards.
+    editable: true           # Allow edits in the UI (won’t overwrite files).
+    updateIntervalSeconds: 10  # Grafana checks every 10s for updated JSON files.
+    options:
+      path: /etc/grafana/dashboards   # Directory where dashboards JSONs will live inside the container.
+```
+
+---
+
+## 3. Download dashboard JSONs (from Grafana.com IDs)
+
+Example: say you want 5 dashboards (replace with the IDs you need):
+
+```bash
+# Node Exporter Full (ID 1860, rev 27)
+curl -L https://grafana.com/api/dashboards/1860/revisions/27/download \
+  -o ./grafana/dashboards/node-exporter.json
+
+# NGINX (ID 12708, rev 1)
+curl -L https://grafana.com/api/dashboards/12708/revisions/1/download \
+  -o ./grafana/dashboards/nginx.json
+
+```
+
+After this, your structure looks like:
+
+```
+grafana/
+  provisioning/
+    datasources/
+      datasource.yml         # Preconfigured Prometheus datasource
+    dashboards/
+      dashboard.yml          # Dashboard provisioning config
+  dashboards/
+    node-exporter.json       # Downloaded dashboards
+    swarm.json
+    nginx.json
+```
+
+---
+
+## 4. Update the Grafana service in your stack file
+
+```yaml
+  grafana:
+    ...
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+     # Mount provisioning configs into the container (datasources + dashboards).
+      - ./grafana/provisioning:/etc/grafana/provisioning
+
+      # Mount the dashboards directory with JSON files.
+      - ./grafana/dashboards:/etc/grafana/dashboards
+    ...
+```
+
+---
+
+## 5. Deploy
+
+Now when you run:
+
+```bash
+docker stack deploy -c docker-compose.yaml monitoring
+```
+
+Grafana will come up with:
+
+* **Prometheus datasource** ready to use.
+* **2 dashboards preloaded** (Node Exporter, Nginx).
+* Fully repeatable in any environment (dev, staging, prod).
+
+---
+
+⚖️ **Best Practice Tip:**
+We keep the JSON dashboards version-controlled in our repo so we know exactly which revisions are deployed. We update manually to newer dashboard versions.
+
+---
