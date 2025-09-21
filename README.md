@@ -161,7 +161,7 @@ task deploy
 # and as a follow up run:
 task status
 ```
-For more info on redeployments, consult the docs, under [safe-workflow-for-updating-a-swarm-stack](http://localhost:8000/demo_monitoring/2-project/swarm/#safe-workflow-for-updating-a-swarm-stack)
+For more info on redeployments, consult the docs, under [safe-workflow-for-updating-a-swarm-stack](http://sean-njela.github.io/demo_monitoring/latest/2-project/swarm/#safe-workflow-for-updating-a-swarm-stack)
 
 ---
 ## 📚 Documentation
@@ -263,4 +263,5 @@ Project Link: [https://github.com/sean-njela/demo_monitoring](https://github.com
 About Me - [About Me](docs/4-about/about.md)
 
 ---
+
 
