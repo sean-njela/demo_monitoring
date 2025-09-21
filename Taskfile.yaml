@@ -101,6 +101,7 @@ tasks:
     desc: "🔁 Cleanup development resources only"
     cmds:
       - docker stack rm monitoring
+      - docker stack rm portainer
       - docker swarm leave --force
 
   cleanup-prod:
