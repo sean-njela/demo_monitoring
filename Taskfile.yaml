@@ -61,6 +61,7 @@ vars:
     sh: date '+%Y%m%d%H%M%S'
   PROM_URL: "Grafana → http://localhost:3000 (admin/admin)"
   GRAF_URL: "Prometheus → http://localhost:9090"
+  PORT_URL: "Portainer → https://localhost:9443"
 
 includes:
   # Example include of shared tasks
@@ -86,7 +87,8 @@ tasks:
     desc: "🏗️ Provision and start local development environment"
     cmds:
       - docker swarm init || true
-      - task: deploy
+      - task: deploy-monitoring
+      - task: deploy-portainer
       - task: status
       - task: info
 
@@ -132,17 +134,31 @@ tasks:
     cmds:
       - echo "Prometheus -> {{.PROM_URL}}"
       - echo "Grafana -> {{.GRAF_URL}}"
+      - echo "Portainer -> {{.PORT_URL}}"
 
   status:
     desc: "Check if everything is running"
     cmds:
       - docker stack ls
       - docker service ls
+      - task: info
 
-  deploy:
-    desc: "Deploy the stack onto the swarm node"
+  deploy-monitoring:
+    desc: "Deploy the monitoring stack onto the swarm node"
     cmds:
       - docker stack deploy -c docker-compose.yaml monitoring
+
+  deploy-portainer:
+    desc: "Deploy the portainer stack onto the swarm node"
+    cmds:
+      - docker stack deploy -c portainer-agent-stack.yaml portainer
+
+  versions:
+    desc: "List current deployed versions"
+    cmds:
+      - mike list
+
+
 
   # # # # # # # ---------- # # # # # # # ---------- # # # # # # #
   # FFMPEG Compression
