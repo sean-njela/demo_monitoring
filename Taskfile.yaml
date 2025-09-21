@@ -153,6 +153,13 @@ tasks:
     cmds:
       - docker stack deploy -c portainer-agent-stack.yaml portainer
 
+  versions:
+    desc: "List current deployed versions"
+    cmds:
+      - mike list
+
+
+
   # # # # # # # ---------- # # # # # # # ---------- # # # # # # #
   # FFMPEG Compression
   # # # # # # # ---------- # # # # # # # ---------- # # # # # # #
