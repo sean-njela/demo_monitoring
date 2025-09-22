@@ -16,23 +16,23 @@
   </p>
 
   <p>
-    <a href="https://github.com/sean-njela/docs/graphs/contributors">
-    <img src="https://img.shields.io/github/contributors/sean-njela/docs" alt="contributors" />
+    <a href="https://github.com/sean-njela/demo_monitoring/graphs/contributors">
+    <img src="https://img.shields.io/github/contributors/sean-njela/demo_monitoring" alt="contributors" />
   </a>
   <a href="">
-    <img src="https://img.shields.io/github/last-commit/sean-njela/docs" alt="last update" />
+    <img src="https://img.shields.io/github/last-commit/sean-njela/demo_monitoring" alt="last update" />
   </a>
-  <a href="https://github.com/sean-njela/docs/network/members">
-    <img src="https://img.shields.io/github/forks/sean-njela/docs" alt="forks" />
+  <a href="https://github.com/sean-njela/demo_monitoring/network/members">
+    <img src="https://img.shields.io/github/forks/sean-njela/demo_monitoring" alt="forks" />
   </a>
-  <a href="https://github.com/sean-njela/docs/stargazers">
-    <img src="https://img.shields.io/github/stars/sean-njela/docs" alt="stars" />
+  <a href="https://github.com/sean-njela/demo_monitoring/stargazers">
+    <img src="https://img.shields.io/github/stars/sean-njela/demo_monitoring" alt="stars" />
   </a>
-  <a href="https://github.com/sean-njela/docs/issues/">
-    <img src="https://img.shields.io/github/issues/sean-njela/docs" alt="open issues" />
+  <a href="https://github.com/sean-njela/demo_monitoring/issues/">
+    <img src="https://img.shields.io/github/issues/sean-njela/demo_monitoring" alt="open issues" />
   </a>
-  <a href="https://github.com/sean-njela/docs/blob/master/LICENSE">
-    <img src="https://img.shields.io/github/license/sean-njela/docs.svg" alt="license" />
+  <a href="https://github.com/sean-njela/demo_monitoring/blob/master/LICENSE">
+    <img src="https://img.shields.io/github/license/sean-njela/demo_monitoring.svg" alt="license" />
   </a>
   </p>
 
@@ -256,6 +256,7 @@ Your Name – [@linkedin](https://linkedin.com/in/sean-njela) – [@twitter/x](h
 Project Link: [https://github.com/sean-njela/demo_monitoring](https://github.com/sean-njela/demo_monitoring)
 
 About Me - [About Me](docs/4-about/about.md)
+
 
 
 
