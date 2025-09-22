@@ -2,8 +2,6 @@
 
   <!-- Row of icons -->
   <p>
-    <img src="https://logo.svgcdn.com/d/kubernetes-plain-wordmark.svg" alt="Kubernetes" height="90" />
-    &nbsp;&nbsp;
     <img src="https://logo.svgcdn.com/d/docker-original-wordmark.svg" alt="Docker" height="90" />
     &nbsp;&nbsp;
     <img src="https://logo.svgcdn.com/d/prometheus-plain-wordmark.svg" alt="Prometheus" height="90" />
@@ -14,7 +12,7 @@
   <h1>🔍 Monitoring & Observability Project</h1>
 
   <p>
-    A hands-on DevOps project showcasing end-to-end monitoring, alerting, and observability for modern infrastructure and applications. This project demonstrates how to design, deploy, and manage a production-grade monitoring stack using tools like Prometheus, cAdvisor, cephFS, Grafana, Alertmanager integrated with CI/CD pipelines and cloud-native environments (Docker Swarm/Kubernetes).
+    A hands-on DevOps project showcasing end-to-end monitoring, alerting, and observability for modern infrastructure and applications. This project demonstrates how to design, deploy, and manage a production-grade monitoring stack using tools like Prometheus, cAdvisor, cephFS, Grafana, Alertmanager integrated with CI/CD pipelines and cloud-native environments (Docker Swarm).
   </p>
 
   <p>
@@ -184,9 +182,6 @@ Docs available at: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 ## 📂 Features
 
 * 📈 Metrics Collection & Visualization – real-time system, application, and container insights
-* 🚨 Alerting & Incident Response – proactive notifications via Slack/Email/PagerDuty
-* 🛠 Infrastructure as Code (IaC) – automated setup with Terraform/Ansible/Helm
-* ☁️ Cloud & Container Integration – monitoring workloads on Docker & Kubernetes
 * 🔒 Reliability & Scalability – designing a monitoring stack built for production
 
 
@@ -237,11 +232,6 @@ For comprehensive troubleshooting, refer to the [Troubleshooting](docs/3-trouble
 
 * [x] 📈 Metrics Collection & Visualization – real-time system, application, and container insights
 * [ ] 🚨 Alerting & Incident Response – proactive notifications via Slack/Email/PagerDuty
-* [ ] 🛠 Infrastructure as Code (IaC) – automated setup with Terraform/Ansible/Helm
-* [ ] ☁️ Cloud & Container Integration – monitoring workloads on Docker & Kubernetes
-* [ ] 🔒 Reliability & Scalability – designing a monitoring stack built for production
-
-
 
 ## 🤝 Contributing
 
@@ -266,6 +256,7 @@ Your Name – [@linkedin](https://linkedin.com/in/sean-njela) – [@twitter/x](h
 Project Link: [https://github.com/sean-njela/demo_monitoring](https://github.com/sean-njela/demo_monitoring)
 
 About Me - [About Me](docs/4-about/about.md)
+
 
 
 
