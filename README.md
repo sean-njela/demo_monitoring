@@ -9,7 +9,7 @@
     <img src="https://logo.svgcdn.com/d/grafana-original-wordmark.svg" alt="Grafana" height="90" />
   </p>
 
-  <h1>🔍 Monitoring & Observability Project</h1>
+  <h1>🔍 Docker Monitoring & Observability Project</h1>
 
   <p>
     A hands-on DevOps project showcasing end-to-end monitoring, alerting, and observability for modern infrastructure and applications. This project demonstrates how to design, deploy, and manage a production-grade monitoring stack using tools like Prometheus, cAdvisor, cephFS, Grafana, Alertmanager integrated with CI/CD pipelines and cloud-native environments (Docker Swarm).
@@ -256,6 +256,7 @@ Your Name – [@linkedin](https://linkedin.com/in/sean-njela) – [@twitter/x](h
 Project Link: [https://github.com/sean-njela/demo_monitoring](https://github.com/sean-njela/demo_monitoring)
 
 About Me - [About Me](docs/4-about/about.md)
+
 
 
 
